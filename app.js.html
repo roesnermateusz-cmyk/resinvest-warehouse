@@ -1,0 +1,492 @@
+// Globalne zmienne
+let documents = [];
+let employees = [];
+let attendance = {};
+let pzCounter = 1;
+let wzCounter = 1;
+let currentDocType = '';
+let selectedEmployee = null;
+let selectedMonth = null;
+
+const months = [
+    'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+    'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
+];
+
+// Inicjalizacja aplikacji
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    updateStats();
+    showTab('magazyn');
+});
+
+// Zarządzanie danymi - LocalStorage
+function loadData() {
+    const savedDocs = localStorage.getItem('documents');
+    const savedEmployees = localStorage.getItem('employees');
+    const savedAttendance = localStorage.getItem('attendance');
+    const savedPzCounter = localStorage.getItem('pzCounter');
+    const savedWzCounter = localStorage.getItem('wzCounter');
+
+    if (savedDocs) documents = JSON.parse(savedDocs);
+    if (savedEmployees) employees = JSON.parse(savedEmployees);
+    if (savedAttendance) attendance = JSON.parse(savedAttendance);
+    if (savedPzCounter) pzCounter = parseInt(savedPzCounter);
+    if (savedWzCounter) wzCounter = parseInt(savedWzCounter);
+}
+
+function saveData() {
+    localStorage.setItem('documents', JSON.stringify(documents));
+    localStorage.setItem('employees', JSON.stringify(employees));
+    localStorage.setItem('attendance', JSON.stringify(attendance));
+    localStorage.setItem('pzCounter', pzCounter.toString());
+    localStorage.setItem('wzCounter', wzCounter.toString());
+}
+
+// Nawigacja między zakładkami
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+    if (tabName === 'magazyn') updateStats();
+    if (tabName === 'historia') updateHistoryTable();
+    if (tabName === 'obecnosc') {
+        showAttendanceList();
+        renderEmployees();
+    }
+}
+
+// Statystyki magazynu
+function getWarehouseStats() {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    let totalPZ = 0;
+    let totalWZ = 0;
+    let monthlyPZ = 0;
+    let monthlyWZ = 0;
+
+    documents.forEach(doc => {
+        const docDate = new Date(doc.created);
+        const amount = parseFloat(doc.ilosc) || 0;
+        
+        if (doc.typ === 'PZ') {
+            totalPZ += amount;
+            if (docDate.getMonth() === currentMonth && docDate.getFullYear() === currentYear) {
+                monthlyPZ += amount;
+            }
+        } else if (doc.typ === 'WZ') {
+            totalWZ += amount;
+            if (docDate.getMonth() === currentMonth && docDate.getFullYear() === currentYear) {
+                monthlyWZ += amount;
+            }
+        }
+    });
+
+    return {
+        currentStock: totalPZ - totalWZ,
+        monthlyPZ,
+        monthlyWZ,
+        totalPZ,
+        totalWZ
+    };
+}
+
+function updateStats() {
+    const stats = getWarehouseStats();
+    document.getElementById('monthly-pz').textContent = stats.monthlyPZ.toFixed(2) + ' m³';
+    document.getElementById('monthly-wz').textContent = stats.monthlyWZ.toFixed(2) + ' m³';
+    document.getElementById('current-stock').textContent = stats.currentStock.toFixed(2) + ' m³';
+    document.getElementById('total-pz').textContent = stats.totalPZ.toFixed(2) + ' m³';
+    document.getElementById('total-wz').textContent = stats.totalWZ.toFixed(2) + ' m³';
+    document.getElementById('total-stock').textContent = stats.currentStock.toFixed(2) + ' m³';
+}
+
+// Dokumenty magazynowe
+function showDocForm(type) {
+    currentDocType = type;
+    document.getElementById('doc-buttons').classList.add('hidden');
+    document.getElementById('doc-form').classList.remove('hidden');
+    
+    const counter = type === 'PZ' ? pzCounter : wzCounter;
+    const numer = `${type}/${counter}/${new Date().getFullYear()}`;
+    
+    document.getElementById('doc-form-title').textContent = 
+        type === 'PZ' ? 'Przyjęcie zewnętrzne (PZ)' : 'Wydanie zewnętrzne (WZ)';
+    document.getElementById('doc-number-preview').textContent = numer;
+    document.getElementById('doc-data-label').textContent = 
+        type === 'PZ' ? 'Data przyjęcia' : 'Data wydania';
+    document.getElementById('doc-kontrahent-label').textContent = 
+        type === 'PZ' ? 'Dostawca' : 'Odbiorca';
+    document.getElementById('doc-podpis-label').textContent = 
+        type === 'PZ' ? 'Przyjął (podpis)' : 'Wydał/Zatwierdził (podpis)';
+    
+    // Wyczyść formularz
+    document.getElementById('doc-data-wystawienia').value = '';
+    document.getElementById('doc-data-transakcji').value = '';
+    document.getElementById('doc-nr-rej').value = '';
+    document.getElementById('doc-oznaczenie').value = '';
+    document.getElementById('doc-ilosc').value = '';
+    document.getElementById('doc-kontrahent').value = '';
+    document.getElementById('doc-podpis').value = '';
+}
+
+function hideDocForm() {
+    document.getElementById('doc-buttons').classList.remove('hidden');
+    document.getElementById('doc-form').classList.add('hidden');
+}
+
+function saveDocument() {
+    const counter = currentDocType === 'PZ' ? pzCounter : wzCounter;
+    const numer = `${currentDocType}/${counter}/${new Date().getFullYear()}`;
+    
+    const newDoc = {
+        typ: currentDocType,
+        numer: numer,
+        dataWystawienia: document.getElementById('doc-data-wystawienia').value,
+        dataTransakcji: document.getElementById('doc-data-transakcji').value,
+        nrRejestracyjny: document.getElementById('doc-nr-rej').value,
+        oznaczenie: document.getElementById('doc-oznaczenie').value,
+        ilosc: document.getElementById('doc-ilosc').value,
+        kontrahent: document.getElementById('doc-kontrahent').value,
+        podpis: document.getElementById('doc-podpis').value,
+        id: Date.now(),
+        created: new Date().toISOString()
+    };
+    
+    documents.push(newDoc);
+    
+    if (currentDocType === 'PZ') {
+        pzCounter++;
+    } else {
+        wzCounter++;
+    }
+    
+    saveData();
+    hideDocForm();
+    updateStats();
+    alert('Dokument został zapisany!');
+}
+
+// Kalkulator
+function calculateVolume() {
+    const dlugosc = parseFloat(document.getElementById('calc-dlugosc').value);
+    const szerokosc = parseFloat(document.getElementById('calc-szerokosc').value);
+    const wysokosc = parseFloat(document.getElementById('calc-wysokosc').value);
+    
+    if (dlugosc && szerokosc && wysokosc) {
+        const result = (dlugosc * szerokosc * wysokosc).toFixed(2);
+        document.getElementById('calc-result-value').textContent = result + ' m³';
+        document.getElementById('calc-result').classList.remove('hidden');
+    } else {
+        alert('Proszę wypełnić wszystkie pola');
+    }
+}
+
+function saveCalculation() {
+    alert('Wynik został zapisany!');
+    document.getElementById('calc-dlugosc').value = '';
+    document.getElementById('calc-szerokosc').value = '';
+    document.getElementById('calc-wysokosc').value = '';
+    document.getElementById('calc-result').classList.add('hidden');
+}
+
+// Lista obecności - pracownicy
+function addEmployee() {
+    const name = document.getElementById('new-employee').value.trim();
+    if (name) {
+        employees.push({ id: Date.now(), name: name });
+        saveData();
+        document.getElementById('new-employee').value = '';
+        renderEmployees();
+    }
+}
+
+function deleteEmployee(id) {
+    if (confirm('Czy na pewno chcesz usunąć tego pracownika?')) {
+        employees = employees.filter(emp => emp.id !== id);
+        saveData();
+        renderEmployees();
+    }
+}
+
+function renderEmployees() {
+    const container = document.getElementById('employees-container');
+    container.innerHTML = '';
+    
+    employees.forEach(emp => {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow p-4 flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer';
+        div.innerHTML = `
+            <div class="flex items-center gap-3" onclick="selectEmployee(${emp.id})">
+                <span class="text-2xl">👤</span>
+                <span class="font-medium text-lg">${emp.name}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="event.stopPropagation(); deleteEmployee(${emp.id})" class="text-red-600 hover:text-red-800 p-2">
+                    🗑️
+                </button>
+                <span class="text-gray-400">→</span>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function selectEmployee(empId) {
+    selectedEmployee = employees.find(e => e.id === empId);
+    showMonthsView();
+}
+
+function showMonthsView() {
+    document.getElementById('attendance-list').classList.add('hidden');
+    document.getElementById('attendance-calendar').classList.add('hidden');
+    document.getElementById('attendance-months').classList.remove('hidden');
+    
+    document.getElementById('attendance-employee-name').textContent = 
+        selectedEmployee.name + ' - Rok 2026';
+    
+    const container = document.getElementById('months-container');
+    container.innerHTML = '';
+    
+    months.forEach((month, index) => {
+        const button = document.createElement('button');
+        button.className = 'bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-center';
+        button.innerHTML = `
+            <span class="font-bold text-lg text-gray-800">${month}</span>
+            <p class="text-sm text-gray-500 mt-1">2026</p>
+        `;
+        button.onclick = () => selectMonth(index);
+        container.appendChild(button);
+    });
+}
+
+function selectMonth(monthIndex) {
+    selectedMonth = monthIndex;
+    showCalendarView();
+}
+
+function showCalendarView() {
+    document.getElementById('attendance-months').classList.add('hidden');
+    document.getElementById('attendance-calendar').classList.remove('hidden');
+    
+    document.getElementById('attendance-month-title').textContent = 
+        `${selectedEmployee.name} - ${months[selectedMonth]} 2026`;
+    
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const tbody = document.getElementById('attendance-table-body');
+    tbody.innerHTML = '';
+    
+    const daysInMonth = new Date(2026, selectedMonth + 1, 0).getDate();
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const key = `${selectedEmployee.id}-${selectedMonth}-${day}`;
+        const record = attendance[key] || { hours: '', signature: '' };
+        const dateStr = `${day.toString().padStart(2, '0')}.${(selectedMonth + 1).toString().padStart(2, '0')}.2026`;
+        
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+            <td class="px-4 py-3 font-medium">${dateStr}</td>
+            <td class="px-4 py-3">
+                <input type="text" value="${record.hours}" 
+                    onchange="updateAttendance(${selectedEmployee.id}, ${selectedMonth}, ${day}, this.value, '${record.signature}')"
+                    placeholder="np. 7-15" 
+                    class="w-full border border-gray-300 rounded px-2 py-1">
+            </td>
+            <td class="px-4 py-3">
+                <input type="text" value="${record.signature}" 
+                    onchange="updateAttendance(${selectedEmployee.id}, ${selectedMonth}, ${day}, '${record.hours}', this.value)"
+                    placeholder="Podpis" 
+                    class="w-full border border-gray-300 rounded px-2 py-1">
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+function updateAttendance(empId, month, day, hours, signature) {
+    const key = `${empId}-${month}-${day}`;
+    attendance[key] = { hours, signature };
+    saveData();
+}
+
+function backToEmployees() {
+    document.getElementById('attendance-months').classList.add('hidden');
+    document.getElementById('attendance-list').classList.remove('hidden');
+    selectedEmployee = null;
+}
+
+function backToMonths() {
+    document.getElementById('attendance-calendar').classList.add('hidden');
+    document.getElementById('attendance-months').classList.remove('hidden');
+    selectedMonth = null;
+}
+
+function showAttendanceList() {
+    document.getElementById('attendance-list').classList.remove('hidden');
+    document.getElementById('attendance-months').classList.add('hidden');
+    document.getElementById('attendance-calendar').classList.add('hidden');
+}
+
+// Historia
+function updateHistoryTable() {
+    const tbody = document.getElementById('history-table-body');
+    tbody.innerHTML = '';
+    
+    documents.forEach(doc => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs font-semibold rounded ${doc.typ === 'PZ' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${doc.typ}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-sm font-medium">${doc.numer}</td>
+            <td class="px-4 py-3 text-sm">${doc.dataTransakcji}</td>
+            <td class="px-4 py-3 text-sm">${doc.nrRejestracyjny}</td>
+            <td class="px-4 py-3 text-sm">${doc.oznaczenie}</td>
+            <td class="px-4 py-3 text-sm font-bold">${doc.ilosc}</td>
+            <td class="px-4 py-3 text-sm">${doc.kontrahent}</td>
+            <td class="px-4 py-3 text-sm">${doc.podpis}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Generowanie PDF/raportów
+function generateWarehousePDF() {
+    const stats = getWarehouseStats();
+    const currentDate = new Date().toLocaleDateString('pl-PL');
+    const monthName = months[new Date().getMonth()];
+    
+    let content = `RESINVEST COMMODITIES - MAGAZYN PYSKOWICE
+RAPORT MIESIĘCZNY - ${monthName.toUpperCase()} ${new Date().getFullYear()}
+Data wygenerowania: ${currentDate}
+
+═══════════════════════════════════════════════════════════
+
+PODSUMOWANIE STANÓW MAGAZYNOWYCH:
+
+PZ (Przyjęcia) w bieżącym miesiącu:    ${stats.monthlyPZ.toFixed(2)} m³
+WZ (Wydania) w bieżącym miesiącu:      ${stats.monthlyWZ.toFixed(2)} m³
+Stan magazynowy aktualny:              ${stats.currentStock.toFixed(2)} m³
+
+═══════════════════════════════════════════════════════════
+
+SZCZEGÓŁY DOKUMENTÓW W BIEŻĄCYM MIESIĄCU:
+
+`;
+
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthlyDocs = documents.filter(doc => {
+        const docDate = new Date(doc.created);
+        return docDate.getMonth() === currentMonth && docDate.getFullYear() === currentYear;
+    });
+
+    monthlyDocs.forEach(doc => {
+        content += `
+${doc.typ} - ${doc.numer}
+Data: ${doc.dataTransakcji}
+Nr rejestracyjny: ${doc.nrRejestracyjny}
+Oznaczenie: ${doc.oznaczenie}
+Ilość: ${doc.ilosc} m³
+Kontrahent: ${doc.kontrahent}
+Podpis: ${doc.podpis}
+───────────────────────────────────────────────────────────
+`;
+    });
+
+    downloadFile(content, `Raport_Magazynowy_${monthName}_${new Date().getFullYear()}.txt`);
+}
+
+function generateHistoryPDF() {
+    const stats = getWarehouseStats();
+    const currentDate = new Date().toLocaleDateString('pl-PL');
+    
+    let content = `RESINVEST COMMODITIES - MAGAZYN PYSKOWICE
+HISTORIA WSZYSTKICH DOKUMENTÓW
+Data wygenerowania: ${currentDate}
+
+═══════════════════════════════════════════════════════════
+
+PODSUMOWANIE OGÓLNE:
+
+Łączne przyjęcia (PZ):    ${stats.totalPZ.toFixed(2)} m³
+Łączne wydania (WZ):      ${stats.totalWZ.toFixed(2)} m³
+Stan magazynowy:          ${stats.currentStock.toFixed(2)} m³
+
+═══════════════════════════════════════════════════════════
+
+WSZYSTKIE DOKUMENTY:
+
+`;
+
+    documents.forEach(doc => {
+        content += `
+${doc.typ} - ${doc.numer}
+Data wystawienia: ${doc.dataWystawienia}
+Data ${doc.typ === 'PZ' ? 'przyjęcia' : 'wydania'}: ${doc.dataTransakcji}
+Nr rejestracyjny pojazdu: ${doc.nrRejestracyjny}
+Oznaczenie towaru: ${doc.oznaczenie}
+Ilość: ${doc.ilosc} m³
+Kontrahent: ${doc.kontrahent}
+Podpis: ${doc.podpis}
+───────────────────────────────────────────────────────────
+`;
+    });
+
+    downloadFile(content, `Historia_Dokumentow_${new Date().getFullYear()}.txt`);
+}
+
+function generateAttendancePDF() {
+    if (!selectedEmployee || selectedMonth === null) {
+        alert('Wybierz pracownika i miesiąc');
+        return;
+    }
+
+    let content = `RESINVEST COMMODITIES - MAGAZYN PYSKOWICE
+LISTA OBECNOŚCI - ${months[selectedMonth].toUpperCase()} 2026
+Pracownik: ${selectedEmployee.name}
+Data wygenerowania: ${new Date().toLocaleDateString('pl-PL')}
+
+═══════════════════════════════════════════════════════════
+
+`;
+
+    const daysInMonth = new Date(2026, selectedMonth + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const key = `${selectedEmployee.id}-${selectedMonth}-${day}`;
+        const record = attendance[key] || { hours: '', signature: '' };
+        const dateStr = `${day.toString().padStart(2, '0')}.${(selectedMonth + 1).toString().padStart(2, '0')}.2026`;
+        
+        content += `${dateStr}    ${record.hours || '-'}    ${record.signature || '-'}\n`;
+    }
+
+    downloadFile(content, `Obecnosc_${selectedEmployee.name.replace(/\s+/g, '_')}_${months[selectedMonth]}_2026.txt`);
+}
+
+function printAttendance() {
+    window.print();
+}
+
+function downloadFile(content, filename) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}

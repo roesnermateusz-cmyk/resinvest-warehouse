@@ -1,0 +1,48 @@
+Proprietary License
+
+Copyright (c) 2026 Mateusz Roesner
+
+All Rights Reserved
+
+ResInvest Commodities - System Magazynowy
+Magazyn Pyskowice
+
+Właściciel licencji: Mateusz Roesner
+
+WARUNKI LICENCJI:
+
+1. PRAWA AUTORSKIE
+   Niniejsze oprogramowanie oraz cała powiązana dokumentacja są własnością 
+   Mateusza Roesnera. Wszelkie prawa, w tym prawa autorskie, są zastrzeżone.
+
+2. OGRANICZENIA UŻYTKOWANIA
+   Bez wyraźnej pisemnej zgody właściciela licencji zabronione jest:
+   - Kopiowanie oprogramowania w całości lub części
+   - Modyfikowanie lub tworzenie dzieł pochodnych
+   - Dystrybucja oprogramowania
+   - Wykorzystanie komercyjne
+   - Sublicencjonowanie
+   - Reverse engineering, dekompilacja lub dezasemblacja
+
+3. WŁASNOŚĆ INTELEKTUALNA
+   Wszystkie prawa do własności intelektualnej związane z tym oprogramowaniem,
+   włączając w to kod źródłowy, projekty, dokumentację oraz algorytmy,
+   należą wyłącznie do Mateusza Roesnera.
+
+4. ZASTRZEŻENIE GWARANCJI
+   Oprogramowanie jest dostarczane "tak jak jest", bez jakichkolwiek gwarancji,
+   wyraźnych lub dorozumianych. Właściciel licencji nie ponosi odpowiedzialności
+   za jakiekolwiek szkody wynikające z użytkowania oprogramowania.
+
+5. KONTAKT
+   W sprawie licencjonowania, pytań lub uzyskania zgody na wykorzystanie
+   oprogramowania, należy skontaktować się z właścicielem licencji:
+   
+   Mateusz Roesner
+   ResInvest Commodities
+   Magazyn Pyskowice
+
+---
+
+NIEPRZESTRZEGANIE WARUNKÓW NINIEJSZEJ LICENCJI MOŻE SKUTKOWAĆ 
+ODPOWIEDZIALNOŚCIĄ PRAWNĄ ZGODNIE Z OBOWIĄZUJĄCYM PRAWEM.

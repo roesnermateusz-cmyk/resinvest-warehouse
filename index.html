@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResInvest Commodities - System Magazynowy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { background: white; }
+        }
+        .tab-button.active {
+            background-color: #EFF6FF;
+            color: #2563EB;
+            border-bottom: 2px solid #2563EB;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <!-- Nagłówek -->
+        <div class="bg-blue-600 text-white p-6 shadow-lg">
+            <h1 class="text-2xl font-bold">ResInvest Commodities</h1>
+            <p class="text-blue-100">Magazyn Pyskowice</p>
+        </div>
+
+        <!-- Nawigacja -->
+        <div class="bg-white shadow-md overflow-x-auto no-print">
+            <div class="flex min-w-max">
+                <button onclick="showTab('magazyn')" class="tab-button flex items-center gap-2 px-6 py-4 font-medium transition-colors text-gray-600 hover:bg-gray-50 active" data-tab="magazyn">
+                    <span>📦</span>
+                    <span class="whitespace-nowrap">Stan Magazynowy</span>
+                </button>
+                <button onclick="showTab('dokumenty')" class="tab-button flex items-center gap-2 px-6 py-4 font-medium transition-colors text-gray-600 hover:bg-gray-50" data-tab="dokumenty">
+                    <span>📄</span>
+                    <span class="whitespace-nowrap">Dokumenty magazynowe</span>
+                </button>
+                <button onclick="showTab('kalkulator')" class="tab-button flex items-center gap-2 px-6 py-4 font-medium transition-colors text-gray-600 hover:bg-gray-50" data-tab="kalkulator">
+                    <span>🧮</span>
+                    <span class="whitespace-nowrap">Kalkulator mp</span>
+                </button>
+                <button onclick="showTab('obecnosc')" class="tab-button flex items-center gap-2 px-6 py-4 font-medium transition-colors text-gray-600 hover:bg-gray-50" data-tab="obecnosc">
+                    <span>👥</span>
+                    <span class="whitespace-nowrap">Lista Obecności</span>
+                </button>
+                <button onclick="showTab('historia')" class="tab-button flex items-center gap-2 px-6 py-4 font-medium transition-colors text-gray-600 hover:bg-gray-50" data-tab="historia">
+                    <span>📊</span>
+                    <span class="whitespace-nowrap">Historia</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Zawartość -->
+        <div class="max-w-7xl mx-auto p-4 md:p-6">
+            
+            <!-- Stan Magazynowy -->
+            <div id="tab-magazyn" class="tab-content">
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Stan Magazynowy</h2>
+                        <button onclick="generateWarehousePDF()" class="no-print bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                            <span>⬇️</span>
+                            Generuj raport PDF
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6">
+                            <h3 class="text-green-800 font-semibold mb-2">PZ w tym miesiącu</h3>
+                            <p class="text-3xl font-bold text-green-600" id="monthly-pz">0.00 m³</p>
+                        </div>
+                        <div class="bg-red-50 border-2 border-red-200 rounded-lg p-6">
+                            <h3 class="text-red-800 font-semibold mb-2">WZ w tym miesiącu</h3>
+                            <p class="text-3xl font-bold text-red-600" id="monthly-wz">0.00 m³</p>
+                        </div>
+                        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                            <h3 class="text-blue-800 font-semibold mb-2">Stan aktualny</h3>
+                            <p class="text-3xl font-bold text-blue-600" id="current-stock">0.00 m³</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dokumenty -->
+            <div id="tab-dokumenty" class="tab-content hidden">
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Dokumenty magazynowe</h2>
+                    
+                    <div id="doc-buttons" class="flex gap-4">
+                        <button onclick="showDocForm('PZ')" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                            Nowe PZ (Przyjęcie)
+                        </button>
+                        <button onclick="showDocForm('WZ')" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            Nowe WZ (Wydanie)
+                        </button>
+                    </div>
+
+                    <div id="doc-form" class="hidden bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800" id="doc-form-title"></h3>
+                            <button onclick="hideDocForm()" class="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+
+                        <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-gray-700">
+                                Numer dokumentu: <strong id="doc-number-preview"></strong>
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Data wystawienia</label>
+                                <input type="date" id="doc-data-wystawienia" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1" id="doc-data-label">Data</label>
+                                <input type="date" id="doc-data-transakcji" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Numer rejestracyjny pojazdu</label>
+                                <input type="text" id="doc-nr-rej" placeholder="np. GLE 1234" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Oznaczenie towaru/materiału</label>
+                                <input type="text" id="doc-oznaczenie" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ilość (m³)</label>
+                                <input type="number" step="0.01" id="doc-ilosc" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1" id="doc-kontrahent-label">Kontrahent</label>
+                                <input type="text" id="doc-kontrahent" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div id="doc-podpis-container">
+                                <label class="block text-sm font-medium text-gray-700 mb-1" id="doc-podpis-label">Podpis</label>
+                                <input type="text" id="doc-podpis" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <button onclick="saveDocument()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2">
+                                <span>💾</span>
+                                Zapisz dokument
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kalkulator -->
+            <div id="tab-kalkulator" class="tab-content hidden">
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Kalkulator metrów przestrzennych</h2>
+                    <div class="bg-white rounded-lg shadow-lg p-6 max-w-md">
+                        <p class="text-gray-600 mb-4">Oblicz objętość zrębki drzewnej</p>
+                        <p class="text-sm text-gray-500 mb-4">Wzór: Długość × Szerokość × Wysokość</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Długość (m)</label>
+                                <input type="number" step="0.01" id="calc-dlugosc" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Szerokość (m)</label>
+                                <input type="number" step="0.01" id="calc-szerokosc" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Wysokość (m)</label>
+                                <input type="number" step="0.01" id="calc-wysokosc" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <button onclick="calculateVolume()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                Oblicz objętość
+                            </button>
+                            <div id="calc-result" class="hidden bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 mb-1">Wynik:</p>
+                                <p class="text-3xl font-bold text-green-600" id="calc-result-value"></p>
+                                <button onclick="saveCalculation()" class="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                    💾 Zapisz wynik
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista Obecności -->
+            <div id="tab-obecnosc" class="tab-content hidden">
+                <div id="attendance-list" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Lista Obecności</h2>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6 max-w-md">
+                        <h3 class="font-bold text-lg mb-4">Dodaj nowego pracownika</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-employee" placeholder="Imię i nazwisko" class="flex-1 border border-gray-300 rounded-lg px-3 py-2">
+                            <button onclick="addEmployee()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                ➕ Dodaj
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-lg text-gray-800">Pracownicy</h3>
+                        <div id="employees-container"></div>
+                    </div>
+                </div>
+
+                <div id="attendance-months" class="hidden space-y-6">
+                    <div class="flex items-center gap-4">
+                        <button onclick="backToEmployees()" class="text-blue-600 hover:text-blue-800">← Powrót</button>
+                        <h2 class="text-2xl font-bold text-gray-800" id="attendance-employee-name"></h2>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="months-container"></div>
+                </div>
+
+                <div id="attendance-calendar" class="hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <button onclick="backToMonths()" class="text-blue-600 hover:text-blue-800">← Powrót</button>
+                            <h2 class="text-2xl font-bold text-gray-800" id="attendance-month-title"></h2>
+                        </div>
+                        <div class="flex gap-2 no-print">
+                            <button onclick="printAttendance()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                🖨️ Drukuj
+                            </button>
+                            <button onclick="generateAttendancePDF()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                ⬇️ Generuj PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Data</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Godziny pracy</th>
+                                        <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Podpis</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-table-body" class="divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historia -->
+            <div id="tab-historia" class="tab-content hidden">
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Historia dokumentów</h2>
+                        <button onclick="generateHistoryPDF()" class="no-print bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                            <span>⬇️</span>
+                            Generuj raport PDF
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="font-bold text-lg mb-4">Podsumowanie ogólne</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="border-l-4 border-green-500 pl-4">
+                                <p class="text-sm text-gray-600">Łączne przyjęcia (PZ)</p>
+                                <p class="text-2xl font-bold text-green-600" id="total-pz">0.00 m³</p>
+                            </div>
+                            <div class="border-l-4 border-red-500 pl-4">
+                                <p class="text-sm text-gray-600">Łączne wydania (WZ)</p>
+                                <p class="text-2xl font-bold text-red-600" id="total-wz">0.00 m³</p>
+                            </div>
+                            <div class="border-l-4 border-blue-500 pl-4">
+                                <p class="text-sm text-gray-600">Stan magazynowy</p>
+                                <p class="text-2xl font-bold text-blue-600" id="total-stock">0.00 m³</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Typ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Numer</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nr rej.</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Oznaczenie</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ilość (m³)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kontrahent</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Podpis</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table-body" class="divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

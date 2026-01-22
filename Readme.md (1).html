@@ -1,0 +1,134 @@
+# ResInvest Commodities - System Magazynowy
+
+System zarządzania magazynem dla ResInvest Commodities w Pyskowicach. Aplikacja webowa do zarządzania dokumentami magazynowymi, stanem magazynowym, listą obecności pracowników oraz kalkulacją objętości materiałów.
+
+## Funkcje aplikacji
+
+### 1. Stan Magazynowy
+- Przegląd stanów przyjęć (PZ) i wydań (WZ) w bieżącym miesiącu
+- Wyświetlanie aktualnego stanu magazynowego
+- Generowanie miesięcznych raportów PDF ze szczegółami wszystkich dokumentów
+
+### 2. Dokumenty magazynowe
+- Automatyczna numeracja dokumentów PZ i WZ (format: PZ/1/2026, WZ/1/2026)
+- Osobne liczniki dla dokumentów przyjęcia i wydania
+- Pola dokumentu: data wystawienia, data przyjęcia/wydania, numer rejestracyjny pojazdu, oznaczenie towaru, ilość w metrach przestrzennych, dane kontrahenta, podpis przyjmującego lub wydającego
+- Wszystkie dokumenty zapisywane lokalnie w przeglądarce
+
+### 3. Kalkulator metrów przestrzennych
+- Obliczanie objętości zrębki drzewnej według wzoru: Długość × Szerokość × Wysokość
+- Wyświetlanie wyniku w metrach przestrzennych
+- Możliwość zapisania obliczonego wyniku
+
+### 4. Lista Obecności
+- Zarządzanie listą pracowników (dodawanie, usuwanie)
+- Harmonogramy pracy dla każdego pracownika na cały rok 2026
+- Wpisywanie godzin pracy i podpisów dla każdego dnia miesiąca
+- Generowanie raportów obecności w formacie PDF
+- Funkcja drukowania list obecności
+
+### 5. Historia
+- Pełna tabela wszystkich dokumentów magazynowych
+- Wyświetlanie szczegółów: typ dokumentu, numer, data, numer rejestracyjny pojazdu, oznaczenie towaru, ilość w metrach przestrzennych, kontrahent, podpis
+- Podsumowanie łącznych przyjęć, wydań i stanu magazynowego
+- Generowanie kompletnych raportów historycznych w formacie PDF
+
+## Instalacja i uruchomienie
+
+### Wymagania
+- Przeglądarka internetowa (Chrome, Firefox, Safari, Edge)
+- Brak wymagań serwerowych - aplikacja działa w trybie offline
+
+### Uruchomienie lokalne
+
+1. Sklonuj repozytorium:
+```bash
+git clone https://github.com/twoja-nazwa/resinvest-warehouse.git
+cd resinvest-warehouse
+```
+
+2. Otwórz plik `index.html` w przeglądarce:
+```bash
+# Na Windows
+start index.html
+
+# Na Mac
+open index.html
+
+# Na Linux
+xdg-open index.html
+```
+
+### Hosting na GitHub Pages
+
+1. Wgraj pliki do repozytorium GitHub
+2. Przejdź do ustawień repozytorium (Settings)
+3. W sekcji "Pages" wybierz branch "main" i folder "root"
+4. Zapisz ustawienia
+5. Aplikacja będzie dostępna pod adresem: `https://twoja-nazwa.github.io/resinvest-warehouse/`
+
+## Struktura projektu
+
+```
+resinvest-warehouse/
+│
+├── index.html          # Główny plik HTML aplikacji
+├── app.js              # Logika aplikacji w JavaScript
+└── README.md           # Dokumentacja projektu
+```
+
+## Przechowywanie danych
+
+Aplikacja wykorzystuje `localStorage` przeglądarki do przechowywania wszystkich danych:
+
+- Dokumenty magazynowe (PZ i WZ)
+- Lista pracowników
+- Harmonogramy obecności
+- Liczniki numeracji dokumentów
+
+Dane pozostają zapisane lokalnie w przeglądarce użytkownika i nie są wysyłane na żaden serwer. Aplikacja działa w pełni offline po pierwszym załadowaniu.
+
+## Uwagi dotyczące użytkowania
+
+### Bezpieczeństwo danych
+- Dane przechowywane są lokalnie w przeglądarce
+- Czyszczenie danych przeglądarki spowoduje utratę wszystkich zapisanych informacji
+- Zaleca się regularne eksportowanie raportów PDF jako kopii zapasowej
+
+### Kompatybilność
+- Aplikacja działa na wszystkich nowoczesnych przeglądarkach
+- Responsywny design dostosowujący się do urządzeń mobilnych
+- Funkcje drukowania dostosowane do formatu papierowego
+
+### Eksport danych
+Aplikacja oferuje eksport danych w formacie tekstowym (.txt):
+- Raporty miesięczne stanów magazynowych
+- Historia wszystkich dokumentów
+- Listy obecności pracowników
+
+Pliki tekstowe mogą być następnie konwertowane do formatu PDF za pomocą dowolnego edytora tekstu lub narzędzi online.
+
+## Wsparcie techniczne
+
+W przypadku pytań lub problemów technicznych, proszę o kontakt przez sekcję Issues w repozytorium GitHub.
+
+## Licencja
+
+Copyright © 2026 Mateusz Roesner. Wszystkie prawa zastrzeżone.
+
+Ten system magazynowy został stworzony dla ResInvest Commodities - Magazyn Pyskowice.
+
+Właściciel licencji: Mateusz Roesner
+
+Oprogramowanie jest własnością Mateusza Roesnera. Wszelkie prawa autorskie, w tym prawo do modyfikacji, dystrybucji i wykorzystania komercyjnego, należą wyłącznie do autora.
+
+Wykorzystanie tego oprogramowania wymaga zgody właściciela licencji.
+
+## Autor
+
+System magazynowy opracowany przez Mateusza Roesnera dla ResInvest Commodities w 2026 roku.
+
+## Kontakt
+
+Mateusz Roesner  
+ResInvest Commodities - Magazyn Pyskowice
